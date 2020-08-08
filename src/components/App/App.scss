@@ -33,9 +33,5 @@
     cursor: pointer;
     transition: .2s;
     @include borders(white, #7b7b7b);
-}
-
-.Face:hover{
-    transition: .2s;
-    @include borders(#7b7b7b, white);
+    @include buttons;
 }

@@ -12,7 +12,7 @@ export enum CellValue{
 }
 
 export enum CellState{
-    open,
+    unvisible,
     visible,
     flagged
 }

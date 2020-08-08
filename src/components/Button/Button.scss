@@ -4,4 +4,22 @@
     @include borders;
     width: 30px;
     height: 30px;
+    font-weight: bold;
+    @include center;
+    @include buttons;
+    &.visible{
+        border-color: #7b7b7b;
+        border-width: 1px;
+    }
+    span{
+        font-size: 12px;
+    }
+    &.value-1{ color: blue }
+    &.value-2{ color: green }
+    &.value-3{ color: red }
+    &.value-4{ color: purple }
+    &.value-5{ color: maroon }
+    &.value-6{ color: turquoise }
+    &.value-7{ color: black }
+    &.value-8{ color: gray }
 }
