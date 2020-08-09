@@ -2,11 +2,11 @@ import React, { useEffect, useState, MouseEvent } from 'react';
 
 import NumberDisplay from '../NumberDisplay';
 import Button from '../Button';
-import { generateCells } from '../../utils';
-import { Cell, Face, CellState } from '../../types';
+import { generateCells, openMultipleCells } from '../../utils';
+import { Cell, Face, CellState, CellValue } from '../../types';
 
 import "./App.scss";
-import { NUM_OF_BOMBS } from '../../constants';
+import { NUM_OF_BOMBS, MAX_ROWS, MAX_COLS } from '../../constants';
 
 const App: React.FC = () => {
     const [cells, setCells] = useState<Cell[][]>(generateCells());
@@ -14,6 +14,8 @@ const App: React.FC = () => {
     const [time, setTime] = useState<number>(0);
     const [live, setLive] = useState<boolean>(false);
     const [bombCount, setBombCounter] = useState<number>(NUM_OF_BOMBS);
+    const [rows, setRows] = useState<number>(MAX_ROWS);
+    const [cols, setCols] = useState<number>(MAX_COLS);
 
     useEffect(() => {
         const handleMouseDown = (): void => { setFace(Face.scared) }
@@ -46,7 +48,27 @@ const App: React.FC = () => {
 
     const handleCellClick = (rowParam: number, colParam: number) => (): void => {
         // start game
-        if(!live) setLive(true);
+        if(!live){
+            // TODO: Make sure that while first click - there is no bomb.
+            setLive(true);
+        } 
+
+        const currentCell = cells[rowParam][colParam];
+        let newCells = cells.slice();
+
+        if(currentCell.state === CellState.flagged || currentCell.state === CellState.visible) return;
+
+        if(currentCell.value === CellValue.bomb){
+            // TODO: Take care of a bomb!
+        }
+        else if(currentCell.value === CellValue.none){
+            newCells = openMultipleCells(newCells, rowParam, colParam);
+            setCells(newCells);
+        }
+        else{
+            newCells[rowParam][colParam].state = CellState.visible;
+            setCells(newCells);
+        }
     }
 
     const handleFaceClick = (): void => {
