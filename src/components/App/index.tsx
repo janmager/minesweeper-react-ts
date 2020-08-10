@@ -16,6 +16,8 @@ const App: React.FC = () => {
     const [bombCount, setBombCounter] = useState<number>(NUM_OF_BOMBS);
     const [rows, setRows] = useState<number>(MAX_ROWS);
     const [cols, setCols] = useState<number>(MAX_COLS);
+    const [hasLost, setHasLost] = useState<boolean>(false);
+    const [hasWon, setHasWon] = useState<boolean>(false);
 
     useEffect(() => {
         const handleMouseDown = (): void => { setFace(Face.scared) }
@@ -41,42 +43,92 @@ const App: React.FC = () => {
                 clearInterval(timer);
             }
         }
-        else{
-            handleFaceClick();
-        }
     }, [live, time]);
+
+    useEffect(() => {
+        if(hasLost){
+            setLive(false);
+            setFace(Face.lost);
+        } 
+    }, [hasLost]);
+
+    useEffect(() => {
+        if(hasWon){
+            setLive(false);
+            setFace(Face.won);
+        }
+    }, [hasWon])
 
     const handleCellClick = (rowParam: number, colParam: number) => (): void => {
         // start game
+        let newCells = cells.slice();
+
         if(!live){
-            // TODO: Make sure that while first click - there is no bomb.
+            let isABomb = newCells[rowParam][colParam].value === CellValue.bomb;
+            while(isABomb){
+                newCells = generateCells();
+                if(newCells[rowParam][colParam].value !== CellValue.bomb){
+                    isABomb = false;
+                    break;
+                }
+            }
             setLive(true);
         } 
 
-        const currentCell = cells[rowParam][colParam];
-        let newCells = cells.slice();
+        const currentCell = newCells[rowParam][colParam];
 
         if(currentCell.state === CellState.flagged || currentCell.state === CellState.visible) return;
 
         if(currentCell.value === CellValue.bomb){
-            // TODO: Take care of a bomb!
+            setHasLost(true);
+            newCells[rowParam][colParam].red = true;
+            newCells = showAllBombs();
+            setCells(newCells);
+            return;
         }
         else if(currentCell.value === CellValue.none){
             newCells = openMultipleCells(newCells, rowParam, colParam);
-            setCells(newCells);
         }
         else{
             newCells[rowParam][colParam].state = CellState.visible;
-            setCells(newCells);
         }
+
+        // Check to see if you have won
+        let openCellExists = false;
+        for(let row = 0; row < MAX_ROWS; row++){
+            for(let col = 0; col < MAX_COLS; col++){
+                const currentCell = newCells[row][col];
+
+                if(currentCell.value !== CellValue.bomb && currentCell.state === CellState.unvisible){
+                    openCellExists = true;
+                    break;
+                }
+            }
+        }
+
+        if(!openCellExists){
+            newCells = newCells.map(row => row.map(cell => {
+                if(cell.value === CellValue.bomb){
+                    return{
+                        ...cell,
+                        state: CellState.flagged
+                    }
+                }
+                return cell;
+            }))
+            setHasWon(true);
+        }
+
+        setCells(newCells);
     }
 
     const handleFaceClick = (): void => {
-        if(live){
-            setTime(0);
-            setLive(false);
-            setCells(generateCells());
-        }
+        setTime(0);
+        setLive(false);
+        setBombCounter(NUM_OF_BOMBS);
+        setCells(generateCells());
+        setHasLost(false);
+        setHasWon(false);
     }
 
     const handleCellContext = (rowParam: number, colParam: number) => (e: React.MouseEvent<HTMLDivElement, MouseEvent>):void => {
@@ -111,9 +163,25 @@ const App: React.FC = () => {
                     onContext={handleCellContext}
                     row={rowIndex} 
                     col={colIndex} 
+                    red={cell.red}
                 /> 
             ))
         )
+    }
+
+    const showAllBombs = (): Cell[][] => {
+        const currentCells = cells.slice();
+
+        return currentCells.map(row => row.map(cell => {
+            if(cell.value === CellValue.bomb){
+                return{
+                    ...cell,
+                    state: CellState.visible
+                }
+            } 
+
+            return cell;
+        }))
     }
 
     return(
